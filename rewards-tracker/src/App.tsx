@@ -4,7 +4,6 @@ import { Button } from "../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { createClient } from "@supabase/supabase-js";
 
-
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -36,8 +35,19 @@ export default function RewardsTracker() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase.from("task_history").select("task_name, points, created_at").order("created_at", { ascending: false });
-      if (!error) setHistory(data || []);
+      const { data, error } = await supabase
+        .from("task_history")
+        .select("task_name, points, created_at")
+        .order("created_at", { ascending: false });
+
+      if (!error) {
+        const formattedData = data?.map(entry => ({
+          task: entry.task_name,
+          points: entry.points,
+          created_at: entry.created_at
+        })) || [];
+        setHistory(formattedData);
+      }
 
       const { data: pointsData } = await supabase.from("rewards").select("points").eq("id", 1).single();
       if (pointsData) setPoints(pointsData.points);
@@ -70,7 +80,7 @@ export default function RewardsTracker() {
       <p className="text-lg">Puntos acumulados: <span className="font-bold">{points}</span></p>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent>
           <h2 className="text-xl font-semibold">✅ Tareas</h2>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {tasks.map((task) => (
@@ -83,7 +93,7 @@ export default function RewardsTracker() {
       </Card>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent>
           <h2 className="text-xl font-semibold">🎁 Recompensas</h2>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {rewards.map((reward) => (
@@ -96,7 +106,7 @@ export default function RewardsTracker() {
       </Card>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent>
           <h2 className="text-xl font-semibold">📜 Historial</h2>
           <Table>
             <TableHeader>
